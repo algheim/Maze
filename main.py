@@ -4,9 +4,9 @@ from constants import *
 
 p.init()
 clock = p.time.Clock()
-
 win = p.display.set_mode((WIDTH, HEIGHT))
-board = Board(10, 10)
+board = Board(15, 15)
+board.generate_maze(win)
 
 
 def update_event():
@@ -20,14 +20,12 @@ def update_event():
 
 
 def main():
-    board.set_temp_values()
-
     while True:
-        event = update_event()
         board.update_screen_pos()
-        
+
         win.fill(GREY)
-        board.draw(win)
+        board.update_event()
+        board.draw(win, False, 0, 0)
         p.display.update()
 
         clock.tick(60)
