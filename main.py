@@ -1,13 +1,19 @@
 import pygame as p
 from board import Board
 from constants import *
+import pathfind
+import draw
 
 p.init()
 clock = p.time.Clock()
 win = p.display.set_mode((WIDTH, HEIGHT))
-board = Board(15, 15)
-board.generate_maze(win)
+draw = draw.Draw(win)
+board = Board(15, 15, draw)
 
+board.generate_maze(win)
+board.board[14][14].value = GOAL
+path = pathfind.fin_path(board.board, 0, 0, draw)
+board.fill_path(path, 0.1)
 
 def update_event():
     for event in p.event.get():
@@ -21,13 +27,9 @@ def update_event():
 
 def main():
     while True:
-        board.update_screen_pos()
-
-        win.fill(GREY)
         board.update_event()
-        board.draw(win, False, 0, 0)
-        p.display.update()
-
+        draw.update_screen_pos()
+        draw.draw_board(board.board, "normal", -1, -1)
         clock.tick(60)
 
 

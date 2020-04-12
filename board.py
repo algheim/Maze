@@ -1,20 +1,19 @@
 from square import Square
 import pygame as p
 from constants import *
-from maze import Maze
 import time
 import random
 
+
 class Board:
-    def __init__(self, length, height):
+    def __init__(self, length, height, draw):
         self.length = length
         self.height = height
         self.board = [[Square(i, j) for i in range(self.length)] for j in range(self.height)]
         self.screen_pos = (0, 0)
         self.animate = True
         self.animation_speed = 0.05
-        #self.maze = Maze(length, height)
-        #self.board = self.maze.generate_maze()
+        self.draw = draw
 
     def update_event(self):
         for event in p.event.get():
@@ -25,35 +24,27 @@ class Board:
             if event.type == p.MOUSEBUTTONDOWN:
                 return event
 
-    def draw(self, win, generate_mode, x, y):
-        for i in range(self.height):
-            for j in range(self.length):
-                self.board[i][j].draw(win, self.screen_pos[0], self.screen_pos[1], generate_mode, x, y)
 
-    def update_screen_pos(self):
-        screen_x = self.screen_pos[0]
-        screen_y = self.screen_pos[1]
-        keys_pressed = p.key.get_pressed()
-        if keys_pressed[p.K_d] or keys_pressed[p.K_RIGHT]:
-            screen_x += SCREEN_SPEED
-        if keys_pressed[p.K_s] or keys_pressed[p.K_DOWN]:
-            screen_y += SCREEN_SPEED
-        if keys_pressed[p.K_a] or keys_pressed[p.K_LEFT]:
-            screen_x -= SCREEN_SPEED
-        if keys_pressed[p.K_w] or keys_pressed[p.K_UP]:
-            screen_y -= SCREEN_SPEED
+    def fill_path(self, path, sleep_time):
+        for pos in path:
+            if self.board[pos[1]][pos[0]].value == EMPTY:
+                self.board[pos[1]][pos[0]].value = PATH
+                if sleep_time != 0:
+                    self.update_event()
+                    self.draw.update_screen_pos()
+                    self.draw.draw_board(self.board, "normal", -1, -1)
+                    time.sleep(sleep_time)
 
-        self.screen_pos = (screen_x, screen_y)
 
     def get_neighbors(self, x, y):
         neighbors = []
-        if x > 0 and self.board[y][x - 1].visited == False: # Left
+        if x > 0: # Left
             neighbors.append((x - 1, y))
-        if x < self.length - 1 and self.board[y][x + 1].visited == False: # Right
+        if x < self.length - 1: # Right
             neighbors.append((x + 1, y))
-        if y > 0 and self.board[y - 1][x].visited == False: # Up
+        if y > 0: # Up
             neighbors.append((x, y - 1))
-        if y < self.height - 1 and self.board[y + 1][x].visited == False: # Down
+        if y < self.height - 1: # Down
             neighbors.append((x, y + 1))
 
         return neighbors
@@ -75,10 +66,8 @@ class Board:
     def animate_generation(self, win, x, y, speed_mult):
         self.update_event()
         time.sleep(self.animation_speed * speed_mult)
-        win.fill(GREY)
-        self.update_screen_pos()
-        self.draw(win, True, x, y)
-        p.display.update()
+        self.draw.update_screen_pos()
+        self.draw.draw_board(self.board, "generate_maze", x, y)
 
     def recursive_backtracker(self, x, y, win):
         self.board[y][x].visited = True
@@ -90,8 +79,8 @@ class Board:
             index = random.randint(0, len(neighbors) - 1)
             next_cell = neighbors.pop(index)
             if self.board[next_cell[1]][next_cell[0]].visited == False:
-                self.recursive_backtracker(next_cell[0], next_cell[1], win)
                 self.remove_wall(x, y, next_cell[0], next_cell[1])
+                self.recursive_backtracker(next_cell[0], next_cell[1], win)
             if self.animate:
                 self.animate_generation(win, x, y, 0.5)
 
