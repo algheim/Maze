@@ -1,35 +1,41 @@
 import pygame as p
 from board import Board
+from settings import Settings
+from path import Path
+from draw import Draw
 from constants import *
-import pathfind
-import draw
 
 p.init()
 clock = p.time.Clock()
 win = p.display.set_mode((WIDTH, HEIGHT))
-draw = draw.Draw(win)
-board = Board(15, 15, draw)
+draw = Draw(win)
+settings = Settings(win)
+board = Board(win, 25, 25, draw, settings)
+path = Path(board, settings, draw)
 
-board.generate_maze(win)
-board.board[14][14].value = GOAL
-path = pathfind.fin_path(board.board, 0, 0, draw)
-board.fill_path(path, 0.1)
 
-def update_event():
-    for event in p.event.get():
-        if event.type == p.QUIT:
-            p.quit()
-            quit()
+def change_settings(settings, board, button_pressed):
+    if button_pressed is None:
+        return
 
-        if event.type == p.MOUSEBUTTONDOWN:
-            return event
+    if button_pressed == settings.maze_button:
+        board.generate_maze()
+    if button_pressed == settings.path_button:
+        new_path = path.find_path()
+        board.fill_path(new_path)
+    if button_pressed == settings.animate_button:
+        settings.change_animate()
 
 
 def main():
     while True:
-        board.update_event()
+        event = board.update_event()
         draw.update_screen_pos()
+        button_pressed = settings.get_button_pressed(event)
+        change_settings(settings, board, button_pressed)
         draw.draw_board(board.board, "normal", -1, -1)
+        draw.draw_settings(settings)
+        p.display.update()
         clock.tick(60)
 
 

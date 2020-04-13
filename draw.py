@@ -18,7 +18,10 @@ class Draw:
                     board[i][j].draw_normal(self.win, self.screen_pos[0],
                     self.screen_pos[1])
 
-        p.display.update()
+    def draw_settings(self, settings):
+        if settings.draw_settings:
+            surface = settings.get_surface()
+            self.win.blit(surface, (0, 0))
 
     def update_screen_pos(self):
         screen_x = self.screen_pos[0]

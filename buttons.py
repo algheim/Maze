@@ -8,7 +8,7 @@ WHITE = (255, 255, 255)
 
 class Button:
     def __init__(self, x, y, length, height, text="", text_size=30, main_color=WHITE, edge_color=BLACK, edge=1):
-        self.coords = (x, y)
+        self.coords = (int(x), int(y))
         self.length = int(length)
         self.height = int(height)
         self.text = text
@@ -20,7 +20,7 @@ class Button:
         self.edge_color = BLACK
         self.highlight_color = main_color
         self.highlight = False
-        self.main_surface = p.Surface((length, height))
+        self.main_surface = p.Surface((int(length), int(height)))
         self.font = p.font.SysFont("timesnewroman", self.text_size)
         self.text_surface = self.font.render(self.text, False, self.text_color)
         self.tag = None

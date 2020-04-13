@@ -6,14 +6,17 @@ import random
 
 
 class Board:
-    def __init__(self, length, height, draw):
+    def __init__(self, win, length, height, draw, settings):
+        self.win = win
         self.length = length
         self.height = height
         self.board = [[Square(i, j) for i in range(self.length)] for j in range(self.height)]
         self.screen_pos = (0, 0)
-        self.animate = True
-        self.animation_speed = 0.05
+        self.animation_speed = 0.01
         self.draw = draw
+        self.settings = settings
+        self.start = (0, 0)
+        self.goal = (length - 1, height - 1)
 
     def update_event(self):
         for event in p.event.get():
@@ -24,17 +27,37 @@ class Board:
             if event.type == p.MOUSEBUTTONDOWN:
                 return event
 
+    def set_visited(self, value):
+        for row in self.board:
+            for square in row:
+                square.visited = value
 
-    def fill_path(self, path, sleep_time):
+    def set_value(self, value):
+        for row in self.board:
+            for square in row:
+                square.value = value
+
+    def reset_walls(self):
+        for row in self.board:
+            for square in row:
+                square.wall_up = True
+                square.wall_down = True
+                square.wall_left = True
+                square.wall_right = True
+
+    def fill_path(self, path):
+        if path is None:
+            return
+
         for pos in path:
             if self.board[pos[1]][pos[0]].value == EMPTY:
                 self.board[pos[1]][pos[0]].value = PATH
-                if sleep_time != 0:
+                if self.settings.animate:
                     self.update_event()
                     self.draw.update_screen_pos()
                     self.draw.draw_board(self.board, "normal", -1, -1)
-                    time.sleep(sleep_time)
-
+                    p.display.update()
+                    time.sleep(self.settings.animation_speed)
 
     def get_neighbors(self, x, y):
         neighbors = []
@@ -63,16 +86,17 @@ class Board:
             self.board[y][x].wall_up = False
             self.board[next_y][x].wall_down = False
 
-    def animate_generation(self, win, x, y, speed_mult):
+    def animate_generation(self, x, y, speed_mult=1):
         self.update_event()
-        time.sleep(self.animation_speed * speed_mult)
+        time.sleep(self.settings.animation_speed * speed_mult)
         self.draw.update_screen_pos()
         self.draw.draw_board(self.board, "generate_maze", x, y)
+        p.display.update()
 
-    def recursive_backtracker(self, x, y, win):
+    def recursive_backtracker(self, x, y):
         self.board[y][x].visited = True
-        if self.animate:
-            self.animate_generation(win, x, y, 1)
+        if self.settings.animate:
+            self.animate_generation(x, y)
         neighbors = self.get_neighbors(x, y)
         self.board[y][x].visited = True
         while len(neighbors) > 0:
@@ -80,12 +104,20 @@ class Board:
             next_cell = neighbors.pop(index)
             if self.board[next_cell[1]][next_cell[0]].visited == False:
                 self.remove_wall(x, y, next_cell[0], next_cell[1])
-                self.recursive_backtracker(next_cell[0], next_cell[1], win)
-            if self.animate:
-                self.animate_generation(win, x, y, 0.5)
+                self.recursive_backtracker(next_cell[0], next_cell[1])
+            if self.settings.animate:
+                self.animate_generation(x, y, 0.1)
 
-    def generate_maze(self, win):
+    def update_start_goal(self):
+        self.board[self.start[1]][self.start[0]].value = START
+        self.board[self.goal[1]][self.goal[0]].value = GOAL
+
+    def generate_maze(self):
+        self.set_visited(False)
+        self.set_value(EMPTY)
+        self.reset_walls()
+        self.update_start_goal()
         start_x = 0
         start_y = 0
-        self.recursive_backtracker(start_x, start_y, win)
-        return self.board
+        self.recursive_backtracker(start_x, start_y)
+        #return self.board
